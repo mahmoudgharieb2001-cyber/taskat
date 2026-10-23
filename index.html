@@ -1,0 +1,1249 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEP Site Inspection & Quality Delivery Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0a3651',
+                        },
+                        status: {
+                            approved: '#16a34a',
+                            executed: '#2563eb',
+                            pending: '#d97706',
+                            postponed: '#dc2626'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Print Styling for Formal Executive Inspection Reports */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 11pt;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .report-card {
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 15mm;
+            }
+        }
+
+        .print-only {
+            display: none;
+        }
+
+        /* Custom Scrollbar for better UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- TOP NAV BAR (No-Print) -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button onclick="toggleMobileSidebar()" class="md:hidden p-2 text-slate-300 hover:text-white text-lg">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="p-1.5 sm:p-2 bg-brand-600 rounded-lg text-white">
+                        <i class="fa-solid fa-clipboard-check text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm sm:text-lg font-bold tracking-tight text-white leading-tight">MEP QA/QC Platform</h1>
+                        <p class="text-[10px] sm:text-xs text-slate-400">Site Delivery & Inspection System</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-1.5 sm:space-x-3">
+                    <button onclick="openProjectModal()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition border border-slate-700 flex items-center space-x-1">
+                        <i class="fa-solid fa-sliders text-xs"></i>
+                        <span class="hidden sm:inline">Project Settings</span>
+                    </button>
+                    <button onclick="prepareAndPrintReport()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span class="hidden sm:inline">Formal Report</span>
+                        <span class="sm:hidden">Report</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MOBILE OVERLAY FOR SIDEBAR -->
+    <div id="mobileSidebarOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 z-30 hidden md:hidden no-print"></div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col md:flex-row gap-4 sm:gap-6">
+
+        <!-- LEFT SIDEBAR: Building Selector & Management (Responsive Drawer for Mobile) -->
+        <aside id="sidebar" class="fixed md:relative inset-y-0 left-0 z-40 md:z-auto w-72 sm:w-80 bg-white md:bg-transparent shadow-xl md:shadow-none transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out flex-shrink-0 no-print flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 sticky top-20 flex-1 flex flex-col overflow-hidden">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-city text-brand-600"></i>
+                        Buildings
+                    </h2>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="openAddBuildingModal()" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold px-2.5 py-1.5 rounded-lg border border-brand-200 transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add</span>
+                        </button>
+                        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 p-1.5 text-base">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Building List -->
+                <div id="buildingList" class="space-y-2 flex-1 overflow-y-auto pr-1">
+                    <!-- Buildings populated dynamically -->
+                </div>
+
+                <!-- Quick Summary Metric Box -->
+                <div class="mt-4 pt-3 border-t border-slate-100 bg-slate-50 p-3 rounded-lg text-xs space-y-2">
+                    <div class="font-semibold text-slate-600 uppercase tracking-wider text-[10px]">Project Overview</div>
+                    <div class="flex justify-between text-slate-700">
+                        <span>Total Buildings:</span>
+                        <span id="statBuildingCount" class="font-bold text-slate-900">0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-700">
+                        <span>Total Deliveries:</span>
+                        <span id="statItemCount" class="font-bold text-slate-900">0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-700">
+                        <span>Approved Ratio:</span>
+                        <span id="statApprovedRatio" class="font-bold text-emerald-600">0%</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN WORKSPACE / CONTENT AREA -->
+        <section class="flex-1 min-w-0">
+            
+            <!-- ACTIVE BUILDING HEADER & TABS (No-print) -->
+            <div id="workspaceHeader" class="no-print bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-5 mb-4 sm:mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-brand-100 text-brand-800" id="currentBuildingTag">Building</span>
+                            <h2 class="text-base sm:text-xl font-bold text-slate-900" id="currentBuildingTitle">Select or Add a Building</h2>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5" id="currentBuildingSubtitle">Manage levels and system sign-off requirements.</p>
+                    </div>
+
+                    <!-- Building Actions -->
+                    <div class="flex items-center space-x-2" id="buildingActionButtons" style="display: none;">
+                        <button onclick="openDuplicateBuildingModal()" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition flex items-center space-x-1" title="Clone this building layout and entries to a new building">
+                            <i class="fa-solid fa-copy"></i>
+                            <span class="hidden sm:inline">Duplicate Building</span>
+                            <span class="sm:hidden">Clone</span>
+                        </button>
+                        <button onclick="deleteCurrentBuilding()" class="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-lg border border-rose-200 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span class="hidden sm:inline">Delete</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Trade Tabs (Scrollable on Mobile) -->
+                <div class="flex border-b border-slate-200 mt-3 space-x-1 sm:space-x-2 overflow-x-auto pb-0.5 no-scrollbar" id="tradeTabs" style="display: none;">
+                    <button onclick="switchTrade('hvac')" id="tab-hvac" class="px-3 py-2 text-xs font-bold border-b-2 border-brand-600 text-brand-600 flex items-center space-x-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-fan text-sm"></i>
+                        <span>HVAC Systems</span>
+                    </button>
+                    <button onclick="switchTrade('power')" id="tab-power" class="px-3 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center space-x-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-bolt text-sm"></i>
+                        <span>Power Circuits</span>
+                    </button>
+                    <button onclick="switchTrade('lighting')" id="tab-lighting" class="px-3 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center space-x-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-lightbulb text-sm"></i>
+                        <span>Lighting Circuits</span>
+                    </button>
+                    <button onclick="switchTrade('data')" id="tab-data" class="px-3 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center space-x-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-network-wired text-sm"></i>
+                        <span>Data & Telecom</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div id="emptyState" class="bg-white rounded-xl border border-dashed border-slate-300 p-8 sm:p-12 text-center no-print">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl sm:text-2xl">
+                    <i class="fa-solid fa-city"></i>
+                </div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-800">No Building Selected</h3>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5">Please create a new building or select an existing one from the left sidebar to start inspecting trades.</p>
+                <button onclick="openAddBuildingModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-lg shadow transition">
+                    + Add New Building
+                </button>
+            </div>
+
+            <!-- TRADE CONTENT WORKSPACE (No-Print view during editing) -->
+            <div id="tradeContent" class="no-print hidden space-y-4 sm:space-y-6">
+                
+                <!-- LEVEL SELECTION & ADD ITEM HEADER -->
+                <div class="bg-white p-3.5 sm:p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Floor Level:</label>
+                        <select id="floorSelect" onchange="renderActiveTradeForm()" class="w-full sm:w-auto bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            <!-- Populated dynamically based on building floors -->
+                        </select>
+                    </div>
+
+                    <button onclick="openAddItemModal()" class="w-full sm:w-auto px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow transition flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-plus"></i>
+                        <span id="addItemBtnLabel">Add Entry</span>
+                    </button>
+                </div>
+
+                <!-- ITEMS TABLE DISPLAY CONTAINER -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider" id="activeSectionTitle">HVAC Inspection Deliveries</h3>
+                        <span class="text-[11px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-full" id="itemCountBadge">0 Entries</span>
+                    </div>
+
+                    <div id="itemsTableContainer" class="overflow-x-auto min-w-full">
+                        <!-- Dynamic Inspection Table goes here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRINT / PDF REPORT PREVIEW AREA (Visible ONLY during print or PDF preview) -->
+            <div id="printReportContainer" class="print-only">
+                <!-- Formal Document Header -->
+                <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-start">
+                    <div>
+                        <h1 class="text-2xl font-black uppercase text-slate-900 tracking-tight" id="reportProjectName">PROJECT QUALITY INSPECTION REPORT</h1>
+                        <p class="text-xs text-slate-600 font-semibold mt-0.5" id="reportSubHeader">OFFICIAL SITE QA/QC DELIVERY & SIGN-OFF DOCUMENT</p>
+                    </div>
+                    <div class="text-right text-xs text-slate-600 space-y-0.5">
+                        <div><strong>Doc Ref:</strong> <span id="reportDocRef">MEP-QA-2026-001</span></div>
+                        <div><strong>Date Generated:</strong> <span id="reportDate">Oct 23, 2026</span></div>
+                        <div><strong>Status:</strong> EXECUTIVE SUBMISSION</div>
+                    </div>
+                </div>
+
+                <!-- Project & Contractor Metadata Block -->
+                <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded border border-slate-300 mb-6">
+                    <div>
+                        <p><strong>Project Title:</strong> <span id="metaReportProject">Project Name</span></p>
+                        <p><strong>Client / Consultant:</strong> <span id="metaReportConsultant">Consultant Name</span></p>
+                        <p><strong>Main Contractor:</strong> <span id="metaReportContractor">Contractor Name</span></p>
+                    </div>
+                    <div>
+                        <p><strong>Site Location:</strong> <span id="metaReportLocation">Site Location</span></p>
+                        <p><strong>Lead QA/QC Manager:</strong> <span id="metaReportLead">Engineer Name</span></p>
+                        <p><strong>Total Buildings Inspected:</strong> <span id="metaReportBuildingsCount">0</span></p>
+                    </div>
+                </div>
+
+                <!-- Complete Buildings & Deliveries Detailed Tables -->
+                <div id="reportBuildingsBody" class="space-y-8">
+                    <!-- Populated dynamically for report printing -->
+                </div>
+
+                <!-- Official Signature Block -->
+                <div class="mt-12 pt-6 border-t-2 border-slate-300 grid grid-cols-2 gap-8 page-break-inside-avoid">
+                    <div class="border border-slate-300 p-4 rounded">
+                        <p class="text-xs font-bold uppercase text-slate-700 mb-8">Supervising Consultant Engineer</p>
+                        <div class="border-b border-dashed border-slate-400 mb-2"></div>
+                        <div class="text-[10px] text-slate-500 space-y-1">
+                            <p>Name: <span id="signConsultantName">_______________________</span></p>
+                            <p>Signature: ____________________ Date: ________</p>
+                        </div>
+                    </div>
+                    <div class="border border-slate-300 p-4 rounded">
+                        <p class="text-xs font-bold uppercase text-slate-700 mb-8">Project Director / Lead Manager</p>
+                        <div class="border-b border-dashed border-slate-400 mb-2"></div>
+                        <div class="text-[10px] text-slate-500 space-y-1">
+                            <p>Name: <span id="signDirectorName">_______________________</span></p>
+                            <p>Signature: ____________________ Date: ________</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- MODAL DIALOGS -->
+
+    <!-- 1. PROJECT SETTINGS MODAL -->
+    <div id="projectModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 m-4">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-brand-600"></i>
+                    Project Metadata
+                </h3>
+                <button onclick="closeModal('projectModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveProjectMetadata(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Project Name *</label>
+                    <input type="text" id="inputProjName" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Consultant Firm</label>
+                        <input type="text" id="inputProjConsultant" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Contractor Firm</label>
+                        <input type="text" id="inputProjContractor" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Site Location</label>
+                    <input type="text" id="inputProjLocation" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Lead QA/QC Engineer</label>
+                        <input type="text" id="inputProjLead" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Project Director</label>
+                        <input type="text" id="inputProjDirector" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('projectModal')" class="px-3.5 py-2 border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-100">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg font-bold hover:bg-brand-700 shadow">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. ADD BUILDING MODAL -->
+    <div id="addBuildingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 m-4">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-building text-brand-600"></i>
+                    Add New Building
+                </h3>
+                <button onclick="closeModal('addBuildingModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveNewBuilding(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Building Designation / Name *</label>
+                    <input type="text" id="inputBuildingName" placeholder="e.g., Building A, Block 02, Administration Villa" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Number of Floors (Levels) *</label>
+                    <input type="number" id="inputBuildingFloors" min="1" max="100" value="3" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <p class="text-[10px] text-slate-500 mt-1">Ground Floor + additional upper levels will be automatically created.</p>
+                </div>
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('addBuildingModal')" class="px-3.5 py-2 border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-100">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg font-bold hover:bg-brand-700 shadow">Create Building</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. DUPLICATE BUILDING MODAL -->
+    <div id="duplicateBuildingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 m-4">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-copy text-indigo-600"></i>
+                    Duplicate Current Building Layout
+                </h3>
+                <button onclick="closeModal('duplicateBuildingModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="executeBuildingDuplication(event)" class="space-y-3 text-xs">
+                <p class="text-slate-600">
+                    This will clone all delivery checklists, spaces, phase assignments, and inspection points from <strong id="dupSourceBuildingName" class="text-slate-900">Building</strong> into a brand new building entry.
+                </p>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">New Building Name / Identifier *</label>
+                    <input type="text" id="inputDupBuildingName" placeholder="e.g., Building B (Symmetrical)" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('duplicateBuildingModal')" class="px-3.5 py-2 border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-100">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow">Duplicate & Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. DYNAMIC ADD/EDIT INSPECTION ITEM MODAL -->
+    <div id="itemModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2" id="itemModalTitle">
+                    <i class="fa-solid fa-file-circle-plus text-brand-600"></i>
+                    Add Inspection Item
+                </h3>
+                <button onclick="closeModal('itemModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="saveInspectionItem(event)" id="inspectionForm" class="space-y-4 text-xs">
+                <!-- Dynamic form fields injected based on active trade -->
+                <div id="dynamicFormFields" class="space-y-3">
+                    <!-- Injected JS Fields -->
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('itemModal')" class="px-3.5 py-2 border border-slate-300 rounded-lg text-slate-700 font-bold hover:bg-slate-100">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg font-bold hover:bg-brand-700 shadow">Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- APPLICATION JAVASCRIPT LOGIC -->
+    <script>
+        // GLOBAL DATA STRUCTURE & STATE
+        let appData = {
+            project: {
+                name: "Al-Majd Commercial Center",
+                consultant: "ACE Consulting Engineers",
+                contractor: "Modern Contracting Co.",
+                location: "New Capital, Zone B",
+                leadEngineer: "Eng. Ahmed El-Sayed",
+                director: "Eng. Mahmoud Hassan"
+            },
+            buildings: []
+        };
+
+        let currentBuildingId = null;
+        let activeTrade = 'hvac'; // 'hvac', 'power', 'lighting', 'data'
+        let editingItemId = null;
+
+        // PRE-DEFINED STATUS OPTIONS & COLORS (ADDED DEFAULT "Not Inspected")
+        const STATUS_OPTIONS = [
+            { id: "Not Inspected", label: "Not Inspected / Pending Review", class: "bg-slate-100 text-slate-600 border-slate-300" },
+            { id: "Approved", label: "Approved", class: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+            { id: "Executed", label: "Executed", class: "bg-blue-100 text-blue-800 border-blue-300" },
+            { id: "Pending Modification", label: "Pending Modification", class: "bg-amber-100 text-amber-800 border-amber-300" },
+            { id: "Postponed for Technical Office Consultation", label: "Postponed (Tech Office)", class: "bg-rose-100 text-rose-800 border-rose-300" }
+        ];
+
+        // INITIALIZATION
+        window.onload = function() {
+            loadInitialDemoData();
+            renderBuildingList();
+            updateProjectHeader();
+        };
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileSidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // SEED INITIAL DEMO DATA FOR IMMEDIATE INTERACTION
+        function loadInitialDemoData() {
+            appData.buildings = [
+                {
+                    id: "bld_1",
+                    name: "Main Tower A",
+                    floors: 3, // Ground, 1st, 2nd
+                    hvac: [
+                        { id: "hvac_1", floor: "Ground Floor", phase: "R", circuitNo: "C-01", cableSize: "4", space: "Lobby / Reception", statusBreakerToDB: "Approved", statusBreakerToODU: "Approved" },
+                        { id: "hvac_2", floor: "Ground Floor", phase: "Y", circuitNo: "C-02", cableSize: "6", space: "Server Room", statusBreakerToDB: "Not Inspected", statusBreakerToODU: "Pending Modification" }
+                    ],
+                    power: [
+                        { id: "pow_1", floor: "Ground Floor", phase: "B", circuitNo: "P-01", cableSize: "3x4", boxCount: 6, spaces: "Main Corridor, Office 101", dbOriginSpace: "Main Corridor", status: "Approved" }
+                    ],
+                    lighting: [
+                        { id: "lt_1", floor: "Ground Floor", phase: "R", circuitNo: "L-01", cableSize: "3x2.5", spaces: "Reception Hall", dbOriginSpace: "Reception Hall", fixtureDetails: "LED Panel 60x60 (12 pcs)", hasDeviator: true, status: "Executed" }
+                    ],
+                    data: [
+                        { id: "dt_1", floor: "Ground Floor", space: "Office 101", pointCount: 4, status: "Approved" }
+                    ]
+                }
+            ];
+            currentBuildingId = appData.buildings[0].id;
+            selectBuilding(currentBuildingId);
+        }
+
+        // NAVIGATION & BUILDING SELECTION
+        function renderBuildingList() {
+            const container = document.getElementById('buildingList');
+            container.innerHTML = '';
+
+            appData.buildings.forEach(b => {
+                const isSelected = b.id === currentBuildingId;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-lg border cursor-pointer transition flex items-center justify-between ${
+                    isSelected ? 'bg-brand-50 border-brand-500 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`;
+                card.onclick = () => {
+                    selectBuilding(b.id);
+                    if (window.innerWidth < 768) toggleMobileSidebar();
+                };
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg ${isSelected ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center text-xs font-bold">
+                            <i class="fa-solid fa-building"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold ${isSelected ? 'text-brand-900' : 'text-slate-800'}">${escapeHtml(b.name)}</h4>
+                            <p class="text-[10px] text-slate-500">${b.floors} Level(s)</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs ${isSelected ? 'text-brand-600' : 'text-slate-300'}"></i>
+                `;
+                container.appendChild(card);
+            });
+
+            updateOverviewMetrics();
+        }
+
+        function selectBuilding(id) {
+            currentBuildingId = id;
+            renderBuildingList();
+
+            const building = appData.buildings.find(b => b.id === id);
+            if (!building) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('tradeContent').classList.add('hidden');
+                document.getElementById('buildingActionButtons').style.display = 'none';
+                document.getElementById('tradeTabs').style.display = 'none';
+                document.getElementById('currentBuildingTitle').textContent = 'Select or Add a Building';
+                return;
+            }
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('tradeContent').classList.remove('hidden');
+            document.getElementById('buildingActionButtons').style.display = 'flex';
+            document.getElementById('tradeTabs').style.display = 'flex';
+
+            document.getElementById('currentBuildingTitle').textContent = building.name;
+            document.getElementById('currentBuildingSubtitle').textContent = `Configured for ${building.floors} Floor levels. All trades active.`;
+
+            // Populate floor dropdown
+            const floorSelect = document.getElementById('floorSelect');
+            floorSelect.innerHTML = '';
+            for (let i = 0; i < building.floors; i++) {
+                const floorName = i === 0 ? 'Ground Floor' : `Floor ${i}`;
+                const opt = document.createElement('option');
+                opt.value = floorName;
+                opt.textContent = floorName;
+                floorSelect.appendChild(opt);
+            }
+
+            renderActiveTradeForm();
+        }
+
+        // TRADE TAB SWITCHING
+        function switchTrade(trade) {
+            activeTrade = trade;
+            
+            // Update tab button styling
+            ['hvac', 'power', 'lighting', 'data'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === trade) {
+                    btn.className = "px-3 py-2 text-xs font-bold border-b-2 border-brand-600 text-brand-600 flex items-center space-x-1.5 whitespace-nowrap";
+                } else {
+                    btn.className = "px-3 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center space-x-1.5 whitespace-nowrap";
+                }
+            });
+
+            renderActiveTradeForm();
+        }
+
+        // RENDER INSPECTION TABLE
+        function renderActiveTradeForm() {
+            const building = appData.buildings.find(b => b.id === currentBuildingId);
+            if (!building) return;
+
+            const selectedFloor = document.getElementById('floorSelect').value || 'Ground Floor';
+            const container = document.getElementById('itemsTableContainer');
+            const titleElement = document.getElementById('activeSectionTitle');
+            const badgeElement = document.getElementById('itemCountBadge');
+
+            let items = building[activeTrade] ? building[activeTrade].filter(i => i.floor === selectedFloor) : [];
+            badgeElement.textContent = `${items.length} Entries`;
+
+            if (activeTrade === 'hvac') {
+                titleElement.textContent = `HVAC AC Units Inspection — ${selectedFloor}`;
+                container.innerHTML = generateHvacTableHtml(items);
+            } else if (activeTrade === 'power') {
+                titleElement.textContent = `Power Circuits Inspection — ${selectedFloor}`;
+                container.innerHTML = generatePowerTableHtml(items);
+            } else if (activeTrade === 'lighting') {
+                titleElement.textContent = `Lighting Circuits Inspection — ${selectedFloor}`;
+                container.innerHTML = generateLightingTableHtml(items);
+            } else if (activeTrade === 'data') {
+                titleElement.textContent = `Data & Telecom Points — ${selectedFloor}`;
+                container.innerHTML = generateDataTableHtml(items);
+            }
+
+            updateOverviewMetrics();
+        }
+
+        // HTML TABLE GENERATORS FOR EACH TRADE WITH INLINE STATUS SELECTORS
+        function generateHvacTableHtml(items) {
+            if (items.length === 0) return generateEmptyTableNotice();
+
+            let rows = items.map(item => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/80 text-xs">
+                    <td class="px-3 sm:px-4 py-3 font-semibold text-slate-800">${escapeHtml(item.space)}</td>
+                    <td class="px-3 sm:px-4 py-3">
+                        <span class="px-2 py-0.5 rounded font-bold text-[10px] ${getPhaseBadgeClass(item.phase)}">Phase ${item.phase}</span>
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 font-mono text-slate-700">${escapeHtml(item.circuitNo)}</td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-600">${escapeHtml(item.cableSize)} mm²</td>
+                    <td class="px-3 sm:px-4 py-3 min-w-[150px]">
+                        ${generateInlineStatusSelect(item.id, 'statusBreakerToDB', item.statusBreakerToDB || 'Not Inspected')}
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 min-w-[150px]">
+                        ${generateInlineStatusSelect(item.id, 'statusBreakerToODU', item.statusBreakerToODU || 'Not Inspected')}
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="editItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded" title="Edit Properties"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 text-slate-600 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="px-3 sm:px-4 py-2.5">Space / Room</th>
+                            <th class="px-3 sm:px-4 py-2.5">Phase</th>
+                            <th class="px-3 sm:px-4 py-2.5">Circuit #</th>
+                            <th class="px-3 sm:px-4 py-2.5">Wire Size</th>
+                            <th class="px-3 sm:px-4 py-2.5">1. Breaker ➔ DB</th>
+                            <th class="px-3 sm:px-4 py-2.5">2. Breaker ➔ ODU</th>
+                            <th class="px-3 sm:px-4 py-2.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        }
+
+        function generatePowerTableHtml(items) {
+            if (items.length === 0) return generateEmptyTableNotice();
+
+            let rows = items.map(item => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/80 text-xs">
+                    <td class="px-3 sm:px-4 py-3 font-mono font-semibold text-slate-800">${escapeHtml(item.circuitNo)}</td>
+                    <td class="px-3 sm:px-4 py-3">
+                        <span class="px-2 py-0.5 rounded font-bold text-[10px] ${getPhaseBadgeClass(item.phase)}">Phase ${item.phase}</span>
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-600">${escapeHtml(item.cableSize)} mm²</td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-700 font-semibold">${item.boxCount} Boxes</td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-600">${escapeHtml(item.spaces)}</td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-600 font-medium">${escapeHtml(item.dbOriginSpace)}</td>
+                    <td class="px-3 sm:px-4 py-3 min-w-[160px]">
+                        ${generateInlineStatusSelect(item.id, 'status', item.status || 'Not Inspected')}
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="editItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 text-slate-600 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="px-3 sm:px-4 py-2.5">Circuit #</th>
+                            <th class="px-3 sm:px-4 py-2.5">Phase</th>
+                            <th class="px-3 sm:px-4 py-2.5">Wire Size</th>
+                            <th class="px-3 sm:px-4 py-2.5">Backboxes</th>
+                            <th class="px-3 sm:px-4 py-2.5">Traversed Spaces</th>
+                            <th class="px-3 sm:px-4 py-2.5">DB Origin Space</th>
+                            <th class="px-3 sm:px-4 py-2.5">Sign-off Status</th>
+                            <th class="px-3 sm:px-4 py-2.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        }
+
+        function generateLightingTableHtml(items) {
+            if (items.length === 0) return generateEmptyTableNotice();
+
+            let rows = items.map(item => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/80 text-xs">
+                    <td class="px-3 sm:px-4 py-3 font-mono font-semibold text-slate-800">${escapeHtml(item.circuitNo)}</td>
+                    <td class="px-3 sm:px-4 py-3">
+                        <span class="px-2 py-0.5 rounded font-bold text-[10px] ${getPhaseBadgeClass(item.phase)}">Phase ${item.phase}</span>
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-600">${escapeHtml(item.cableSize)} mm²</td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-700">${escapeHtml(item.fixtureDetails)}</td>
+                    <td class="px-3 sm:px-4 py-3">
+                        ${item.hasDeviator ? '<span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded">Yes (2-Way)</span>' : '<span class="text-slate-400">No</span>'}
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 text-slate-600">${escapeHtml(item.spaces)}</td>
+                    <td class="px-3 sm:px-4 py-3 min-w-[160px]">
+                        ${generateInlineStatusSelect(item.id, 'status', item.status || 'Not Inspected')}
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="editItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 text-slate-600 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="px-3 sm:px-4 py-2.5">Circuit #</th>
+                            <th class="px-3 sm:px-4 py-2.5">Phase</th>
+                            <th class="px-3 sm:px-4 py-2.5">Wire Size</th>
+                            <th class="px-3 sm:px-4 py-2.5">Outlets / Fixtures Details</th>
+                            <th class="px-3 sm:px-4 py-2.5">Deviator</th>
+                            <th class="px-3 sm:px-4 py-2.5">Traversed Spaces</th>
+                            <th class="px-3 sm:px-4 py-2.5">Sign-off Status</th>
+                            <th class="px-3 sm:px-4 py-2.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        }
+
+        function generateDataTableHtml(items) {
+            if (items.length === 0) return generateEmptyTableNotice();
+
+            let rows = items.map(item => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/80 text-xs">
+                    <td class="px-3 sm:px-4 py-3 font-semibold text-slate-800">${escapeHtml(item.space)}</td>
+                    <td class="px-3 sm:px-4 py-3 font-bold text-brand-700">${item.pointCount} Point(s)</td>
+                    <td class="px-3 sm:px-4 py-3 min-w-[160px]">
+                        ${generateInlineStatusSelect(item.id, 'status', item.status || 'Not Inspected')}
+                    </td>
+                    <td class="px-3 sm:px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="editItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteItem('${item.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 text-slate-600 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="px-3 sm:px-4 py-2.5">Space Designation</th>
+                            <th class="px-3 sm:px-4 py-2.5">Data Points Quantity</th>
+                            <th class="px-3 sm:px-4 py-2.5">Sign-off Status</th>
+                            <th class="px-3 sm:px-4 py-2.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        }
+
+        function generateEmptyTableNotice() {
+            return `
+                <div class="p-8 text-center text-slate-400 text-xs">
+                    <i class="fa-regular fa-folder-open text-2xl mb-2 text-slate-300"></i>
+                    <p>No inspection records entered for this level yet.</p>
+                </div>
+            `;
+        }
+
+        // GENERATE INLINE STATUS DROPDOWN FOR QUICK CHANGE
+        function generateInlineStatusSelect(itemId, statusField, currentStatus) {
+            const currentOpt = STATUS_OPTIONS.find(s => s.id === currentStatus) || STATUS_OPTIONS[0];
+            const optionsHtml = STATUS_OPTIONS.map(s => `
+                <option value="${s.id}" ${s.id === currentStatus ? 'selected' : ''}>${s.label}</option>
+            `).join('');
+
+            return `
+                <select onchange="updateItemStatusInline('${itemId}', '${statusField}', this.value)" class="text-[10px] font-bold px-2 py-1 rounded border outline-none cursor-pointer transition ${currentOpt.class}">
+                    ${optionsHtml}
+                </select>
+            `;
+        }
+
+        function updateItemStatusInline(itemId, statusField, newStatus) {
+            const building = appData.buildings.find(b => b.id === currentBuildingId);
+            if (!building || !building[activeTrade]) return;
+
+            const item = building[activeTrade].find(i => i.id === itemId);
+            if (item) {
+                item[statusField] = newStatus;
+                renderActiveTradeForm();
+            }
+        }
+
+        // ADD / EDIT INSPECTION ITEM DYNAMIC FORM (STATUS NOW OPTIONAL / DEFAULT NOT INSPECTED)
+        function openAddItemModal(itemId = null) {
+            editingItemId = itemId;
+            const modal = document.getElementById('itemModal');
+            const fieldsContainer = document.getElementById('dynamicFormFields');
+            const title = document.getElementById('itemModalTitle');
+            const selectedFloor = document.getElementById('floorSelect').value || 'Ground Floor';
+
+            title.innerHTML = itemId 
+                ? `<i class="fa-solid fa-pen text-brand-600"></i> Edit Inspection Entry` 
+                : `<i class="fa-solid fa-file-circle-plus text-brand-600"></i> Add ${activeTrade.toUpperCase()} Entry — ${selectedFloor}`;
+
+            // Fetch existing data if editing
+            let existingData = {};
+            if (itemId) {
+                const bld = appData.buildings.find(b => b.id === currentBuildingId);
+                if (bld && bld[activeTrade]) {
+                    existingData = bld[activeTrade].find(i => i.id === itemId) || {};
+                }
+            }
+
+            // Render trade specific technical entry fields
+            if (activeTrade === 'hvac') {
+                fieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Space / Room Name *</label>
+                        <input type="text" id="field_space" value="${escapeHtml(existingData.space || '')}" placeholder="e.g. Executive Office 102" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Phase Color *</label>
+                            <select id="field_phase" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="R" ${existingData.phase==='R'?'selected':''}>Red Phase (R)</option>
+                                <option value="Y" ${existingData.phase==='Y'?'selected':''}>Yellow Phase (Y)</option>
+                                <option value="B" ${existingData.phase==='B'?'selected':''}>Blue Phase (B)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Circuit Number *</label>
+                            <input type="text" id="field_circuitNo" value="${escapeHtml(existingData.circuitNo || '')}" placeholder="e.g. AC-01" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Cable Cross-Section (mm²) *</label>
+                        <input type="text" id="field_cableSize" value="${escapeHtml(existingData.cableSize || '')}" placeholder="e.g. 4 or 6" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                `;
+            } else if (activeTrade === 'power') {
+                fieldsContainer.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Circuit Number *</label>
+                            <input type="text" id="field_circuitNo" value="${escapeHtml(existingData.circuitNo || '')}" placeholder="e.g. PWR-04" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Phase Color *</label>
+                            <select id="field_phase" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                                <option value="R" ${existingData.phase==='R'?'selected':''}>Red Phase (R)</option>
+                                <option value="Y" ${existingData.phase==='Y'?'selected':''}>Yellow Phase (Y)</option>
+                                <option value="B" ${existingData.phase==='B'?'selected':''}>Blue Phase (B)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Wire Gauge / Size *</label>
+                            <input type="text" id="field_cableSize" value="${escapeHtml(existingData.cableSize || '')}" placeholder="e.g. 3x4" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Total Backboxes Count *</label>
+                            <input type="number" id="field_boxCount" value="${existingData.boxCount || 1}" min="1" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Traversed Spaces *</label>
+                        <input type="text" id="field_spaces" value="${escapeHtml(existingData.spaces || '')}" placeholder="e.g. Corridor, Meeting Room A, Office 12" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Circuit Origin Space (From DB Location) *</label>
+                        <input type="text" id="field_dbOriginSpace" value="${escapeHtml(existingData.dbOriginSpace || '')}" placeholder="e.g. Electrical Closet 01" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                `;
+            } else if (activeTrade === 'lighting') {
+                fieldsContainer.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Circuit Number *</label>
+                            <input type="text" id="field_circuitNo" value="${escapeHtml(existingData.circuitNo || '')}" placeholder="e.g. LT-01" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Phase Color *</label>
+                            <select id="field_phase" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                                <option value="R" ${existingData.phase==='R'?'selected':''}>Red Phase (R)</option>
+                                <option value="Y" ${existingData.phase==='Y'?'selected':''}>Yellow Phase (Y)</option>
+                                <option value="B" ${existingData.phase==='B'?'selected':''}>Blue Phase (B)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Wire Gauge / Size *</label>
+                        <input type="text" id="field_cableSize" value="${escapeHtml(existingData.cableSize || '')}" placeholder="e.g. 3x2.5" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Outlets / Fixtures Description & Quantity *</label>
+                        <input type="text" id="field_fixtureDetails" value="${escapeHtml(existingData.fixtureDetails || '')}" placeholder="e.g. Spotlight 12W (8 pcs), Panel LED (4 pcs)" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                    <div class="flex items-center space-x-2 py-1">
+                        <input type="checkbox" id="field_hasDeviator" ${existingData.hasDeviator ? 'checked' : ''} class="w-4 h-4 text-brand-600 rounded">
+                        <label for="field_hasDeviator" class="font-bold text-slate-700">Includes Deviator / Intermediate Switch (2-Way/3-Way Control)</label>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Traversed Spaces *</label>
+                        <input type="text" id="field_spaces" value="${escapeHtml(existingData.spaces || '')}" placeholder="e.g. Corridor, Lobby" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Circuit Origin Space (From DB) *</label>
+                        <input type="text" id="field_dbOriginSpace" value="${escapeHtml(existingData.dbOriginSpace || '')}" placeholder="e.g. DB Room 01" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                `;
+            } else if (activeTrade === 'data') {
+                fieldsContainer.innerHTML = `
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Space Designation *</label>
+                        <input type="text" id="field_space" value="${escapeHtml(existingData.space || '')}" placeholder="e.g. Conference Room" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Data / Telecom Points Quantity *</label>
+                        <input type="number" id="field_pointCount" value="${existingData.pointCount || 2}" min="1" required class="w-full border border-slate-300 rounded-lg p-2.5 outline-none">
+                    </div>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function saveInspectionItem(e) {
+            e.preventDefault();
+            const building = appData.buildings.find(b => b.id === currentBuildingId);
+            if (!building) return;
+
+            const selectedFloor = document.getElementById('floorSelect').value || 'Ground Floor';
+            if (!building[activeTrade]) building[activeTrade] = [];
+
+            // Preserve existing status when editing, or set to 'Not Inspected' by default for new items
+            let existingItem = editingItemId ? building[activeTrade].find(i => i.id === editingItemId) : null;
+
+            let newItem = {
+                id: editingItemId || `${activeTrade}_${Date.now()}`,
+                floor: selectedFloor
+            };
+
+            if (activeTrade === 'hvac') {
+                newItem.space = document.getElementById('field_space').value;
+                newItem.phase = document.getElementById('field_phase').value;
+                newItem.circuitNo = document.getElementById('field_circuitNo').value;
+                newItem.cableSize = document.getElementById('field_cableSize').value;
+                newItem.statusBreakerToDB = existingItem ? existingItem.statusBreakerToDB : 'Not Inspected';
+                newItem.statusBreakerToODU = existingItem ? existingItem.statusBreakerToODU : 'Not Inspected';
+            } else if (activeTrade === 'power') {
+                newItem.circuitNo = document.getElementById('field_circuitNo').value;
+                newItem.phase = document.getElementById('field_phase').value;
+                newItem.cableSize = document.getElementById('field_cableSize').value;
+                newItem.boxCount = parseInt(document.getElementById('field_boxCount').value) || 1;
+                newItem.spaces = document.getElementById('field_spaces').value;
+                newItem.dbOriginSpace = document.getElementById('field_dbOriginSpace').value;
+                newItem.status = existingItem ? existingItem.status : 'Not Inspected';
+            } else if (activeTrade === 'lighting') {
+                newItem.circuitNo = document.getElementById('field_circuitNo').value;
+                newItem.phase = document.getElementById('field_phase').value;
+                newItem.cableSize = document.getElementById('field_cableSize').value;
+                newItem.fixtureDetails = document.getElementById('field_fixtureDetails').value;
+                newItem.hasDeviator = document.getElementById('field_hasDeviator').checked;
+                newItem.spaces = document.getElementById('field_spaces').value;
+                newItem.dbOriginSpace = document.getElementById('field_dbOriginSpace').value;
+                newItem.status = existingItem ? existingItem.status : 'Not Inspected';
+            } else if (activeTrade === 'data') {
+                newItem.space = document.getElementById('field_space').value;
+                newItem.pointCount = parseInt(document.getElementById('field_pointCount').value) || 1;
+                newItem.status = existingItem ? existingItem.status : 'Not Inspected';
+            }
+
+            if (editingItemId) {
+                const idx = building[activeTrade].findIndex(i => i.id === editingItemId);
+                if (idx !== -1) building[activeTrade][idx] = newItem;
+            } else {
+                building[activeTrade].push(newItem);
+            }
+
+            closeModal('itemModal');
+            renderActiveTradeForm();
+        }
+
+        // BUILDING DUPLICATION LOGIC
+        function openDuplicateBuildingModal() {
+            const building = appData.buildings.find(b => b.id === currentBuildingId);
+            if (!building) return;
+
+            document.getElementById('dupSourceBuildingName').textContent = building.name;
+            document.getElementById('inputDupBuildingName').value = `${building.name} (Copy)`;
+            document.getElementById('duplicateBuildingModal').classList.remove('hidden');
+        }
+
+        function executeBuildingDuplication(e) {
+            e.preventDefault();
+            const srcBuilding = appData.buildings.find(b => b.id === currentBuildingId);
+            if (!srcBuilding) return;
+
+            const newName = document.getElementById('inputDupBuildingName').value;
+            
+            // Deep clone building
+            const newBuilding = JSON.parse(JSON.stringify(srcBuilding));
+            newBuilding.id = `bld_${Date.now()}`;
+            newBuilding.name = newName;
+
+            // Generate new IDs for cloned trade items
+            ['hvac', 'power', 'lighting', 'data'].forEach(trade => {
+                if (newBuilding[trade]) {
+                    newBuilding[trade].forEach(item => {
+                        item.id = `${trade}_${Math.random().toString(36).substr(2, 9)}`;
+                    });
+                }
+            });
+
+            appData.buildings.push(newBuilding);
+            closeModal('duplicateBuildingModal');
+            selectBuilding(newBuilding.id);
+        }
+
+        // ADD & DELETE BUILDING LOGIC
+        function openAddBuildingModal() {
+            document.getElementById('inputBuildingName').value = '';
+            document.getElementById('addBuildingModal').classList.remove('hidden');
+        }
+
+        function saveNewBuilding(e) {
+            e.preventDefault();
+            const name = document.getElementById('inputBuildingName').value;
+            const floors = parseInt(document.getElementById('inputBuildingFloors').value) || 1;
+
+            const newBuilding = {
+                id: `bld_${Date.now()}`,
+                name: name,
+                floors: floors,
+                hvac: [],
+                power: [],
+                lighting: [],
+                data: []
+            };
+
+            appData.buildings.push(newBuilding);
+            closeModal('addBuildingModal');
+            selectBuilding(newBuilding.id);
+        }
+
+        function deleteCurrentBuilding() {
+            if (appData.buildings.length <= 1) {
+                alert('Project must contain at least one building.');
+                return;
+            }
+
+            appData.buildings = appData.buildings.filter(b => b.id !== currentBuildingId);
+            currentBuildingId = appData.buildings[0].id;
+            selectBuilding(currentBuildingId);
+        }
+
+        // PROJECT METADATA
+        function openProjectModal() {
+            document.getElementById('inputProjName').value = appData.project.name;
+            document.getElementById('inputProjConsultant').value = appData.project.consultant;
+            document.getElementById('inputProjContractor').value = appData.project.contractor;
+            document.getElementById('inputProjLocation').value = appData.project.location;
+            document.getElementById('inputProjLead').value = appData.project.leadEngineer;
+            document.getElementById('inputProjDirector').value = appData.project.director;
+            document.getElementById('projectModal').classList.remove('hidden');
+        }
+
+        function saveProjectMetadata(e) {
+            e.preventDefault();
+            appData.project.name = document.getElementById('inputProjName').value;
+            appData.project.consultant = document.getElementById('inputProjConsultant').value;
+            appData.project.contractor = document.getElementById('inputProjContractor').value;
+            appData.project.location = document.getElementById('inputProjLocation').value;
+            appData.project.leadEngineer = document.getElementById('inputProjLead').value;
+            appData.project.director = document.getElementById('inputProjDirector').value;
+
+            updateProjectHeader();
+            closeModal('projectModal');
+        }
+
+        function updateProjectHeader() {
+            // Update Report Meta fields
+            document.getElementById('reportProjectName').textContent = appData.project.name.toUpperCase();
+            document.getElementById('metaReportProject').textContent = appData.project.name;
+            document.getElementById('metaReportConsultant').textContent = appData.project.consultant;
+            document.getElementById('metaReportContractor').textContent = appData.project.contractor;
+            document.getElementById('metaReportLocation').textContent = appData.project.location;
+            document.getElementById('metaReportLead').textContent = appData.project.leadEngineer;
+            document.getElementById('signConsultantName').textContent = appData.project.consultant;
+            document.getElementById('signDirectorName').textContent = appData.project.director;
+        }
+
+        // OVERVIEW METRICS CALCULATION
+        function updateOverviewMetrics() {
+            document.getElementById('statBuildingCount').textContent = appData.buildings.length;
+            
+            let totalItems = 0;
+            let approvedItems = 0;
+
+            appData.buildings.forEach(b => {
+                ['hvac', 'power', 'lighting', 'data'].forEach(t => {
+                    if (b[t]) {
+                        b[t].forEach(item => {
+                            totalItems++;
+                            if (t === 'hvac') {
+                                if (item.statusBreakerToDB === 'Approved' && item.statusBreakerToODU === 'Approved') approvedItems++;
+                            } else {
+                                if (item.status === 'Approved') approvedItems++;
+                            }
+                        });
+                    }
+                });
+            });
+
+            document.getElementById('statItemCount').textContent = totalItems;
+            const ratio = totalItems > 0 ? Math.round((approvedItems / totalItems) * 100) : 0;
+            document.getElementById('statApprovedRatio').textContent = `${ratio}%`;
+        }
+
+        // PREPARE AND PRINT FORMAL EXECUTIVE REPORT
+        function prepareAndPrintReport() {
+            updateProjectHeader();
+            document.getElementById('metaReportBuildingsCount').textContent = appData.buildings.length;
+            document.getElementById('reportDate').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const reportContainer = document.getElementById('reportBuildingsBody');
+            reportContainer.innerHTML = '';
+
+            appData.buildings.forEach(building => {
+                const bldSection = document.createElement('div');
+                bldSection.className = 'border border-slate-300 rounded p-4 bg-white report-card';
+
+                let hvacRows = (building.hvac || []).map(i => `
+                    <tr><td class="p-1 border">${i.floor}</td><td class="p-1 border">${i.space}</td><td class="p-1 border">Phase ${i.phase} / ${i.circuitNo}</td><td class="p-1 border">${i.cableSize} mm²</td><td class="p-1 border">${i.statusBreakerToDB||'Not Inspected'}</td><td class="p-1 border">${i.statusBreakerToODU||'Not Inspected'}</td></tr>
+                `).join('');
+
+                let powerRows = (building.power || []).map(i => `
+                    <tr><td class="p-1 border">${i.floor}</td><td class="p-1 border">${i.circuitNo} (P-${i.phase})</td><td class="p-1 border">${i.cableSize} mm²</td><td class="p-1 border">${i.boxCount} Boxes</td><td class="p-1 border">${i.spaces}</td><td class="p-1 border">${i.status||'Not Inspected'}</td></tr>
+                `).join('');
+
+                let lightingRows = (building.lighting || []).map(i => `
+                    <tr><td class="p-1 border">${i.floor}</td><td class="p-1 border">${i.circuitNo} (P-${i.phase})</td><td class="p-1 border">${i.cableSize} mm²</td><td class="p-1 border">${i.fixtureDetails}</td><td class="p-1 border">${i.hasDeviator?'Yes':'No'}</td><td class="p-1 border">${i.status||'Not Inspected'}</td></tr>
+                `).join('');
+
+                let dataRows = (building.data || []).map(i => `
+                    <tr><td class="p-1 border">${i.floor}</td><td class="p-1 border">${i.space}</td><td class="p-1 border">${i.pointCount} Points</td><td class="p-1 border">${i.status||'Not Inspected'}</td></tr>
+                `).join('');
+
+                bldSection.innerHTML = `
+                    <h3 class="text-sm font-bold uppercase text-slate-900 border-b pb-2 mb-3">Building: ${escapeHtml(building.name)} (${building.floors} Floors)</h3>
+                    
+                    <div class="space-y-4 text-[10px]">
+                        <div>
+                            <h4 class="font-bold text-slate-700 uppercase mb-1">1. HVAC Systems Inspection Summary</h4>
+                            ${hvacRows ? `<table class="w-full text-left border"><thead><tr class="bg-slate-100"><th class="p-1 border">Floor</th><th class="p-1 border">Space</th><th class="p-1 border">Circuit</th><th class="p-1 border">Cable</th><th class="p-1 border">Breaker➔DB</th><th class="p-1 border">Breaker➔ODU</th></tr></thead><tbody>${hvacRows}</tbody></table>` : '<p class="italic text-slate-400">No records.</p>'}
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-slate-700 uppercase mb-1">2. Power Circuits Summary</h4>
+                            ${powerRows ? `<table class="w-full text-left border"><thead><tr class="bg-slate-100"><th class="p-1 border">Floor</th><th class="p-1 border">Circuit</th><th class="p-1 border">Cable</th><th class="p-1 border">Boxes</th><th class="p-1 border">Spaces</th><th class="p-1 border">Status</th></tr></thead><tbody>${powerRows}</tbody></table>` : '<p class="italic text-slate-400">No records.</p>'}
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-slate-700 uppercase mb-1">3. Lighting Circuits Summary</h4>
+                            ${lightingRows ? `<table class="w-full text-left border"><thead><tr class="bg-slate-100"><th class="p-1 border">Floor</th><th class="p-1 border">Circuit</th><th class="p-1 border">Cable</th><th class="p-1 border">Fixtures</th><th class="p-1 border">Deviator</th><th class="p-1 border">Status</th></tr></thead><tbody>${lightingRows}</tbody></table>` : '<p class="italic text-slate-400">No records.</p>'}
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-slate-700 uppercase mb-1">4. Data & Telecom Points Summary</h4>
+                            ${dataRows ? `<table class="w-full text-left border"><thead><tr class="bg-slate-100"><th class="p-1 border">Floor</th><th class="p-1 border">Space</th><th class="p-1 border">Points</th><th class="p-1 border">Status</th></tr></thead><tbody>${dataRows}</tbody></table>` : '<p class="italic text-slate-400">No records.</p>'}
+                        </div>
+                    </div>
+                `;
+
+                reportContainer.appendChild(bldSection);
+            });
+
+            // Trigger system print dialogue
+            window.print();
+        }
+
+        // UTILITY HELPERS
+        function getPhaseBadgeClass(phase) {
+            if (phase === 'R') return 'bg-rose-100 text-rose-800 border border-rose-300';
+            if (phase === 'Y') return 'bg-amber-100 text-amber-800 border border-amber-300';
+            if (phase === 'B') return 'bg-blue-100 text-blue-800 border border-blue-300';
+            return 'bg-slate-100 text-slate-700';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
+```
